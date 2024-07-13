@@ -203,13 +203,16 @@ const onUpdateBut = () => {
   const dataValues = getDataFromForm(inputs);
   showHexDump(dataValues);
   localStorage.setItem("dataStorage", JSON.stringify(dataValues));
+};
+
+const onDownloadBut = () => {
   const eeprom_img_b64 = btoa(String.fromCharCode(...eeprom_img));
   const eeprom_img_b64_url =
     "data:application/octet-stream;base64," + eeprom_img_b64;
   const downloadLink = document.createElement("a");
   downloadLink.href = eeprom_img_b64_url;
   downloadLink.download = "eeprom.img";
-  // downloadLink.click();
+  downloadLink.click();
   // wait for download to finish and then remove the link
   setTimeout(() => {
     downloadLink.remove();
@@ -231,6 +234,8 @@ const onLoad = () => {
   updateBut.addEventListener("click", onUpdateBut);
   const resetBut = document.getElementById("resetBut");
   resetBut.addEventListener("click", onResetBut);
+  const downloadBut = document.getElementById("downloadBut");
+  downloadBut.addEventListener("click", onDownloadBut);
   const dataStorage = JSON.parse(localStorage.getItem("dataStorage"));
   let data = {};
   const inputs = document.querySelectorAll("input");
