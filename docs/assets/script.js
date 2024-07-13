@@ -233,19 +233,17 @@ const onLoad = () => {
   resetBut.addEventListener("click", onResetBut);
   const dataStorage = JSON.parse(localStorage.getItem("dataStorage"));
   let data = {};
-  if (dataStorage) {
-    const inputs = document.querySelectorAll("input");
-    inputs.forEach((input) => {
-      if (dataStorage[input.id]) {
-        input.value = dataStorage[input.id];
-        data[input.id] = dataStorage[input.id];
-      } else {
-        input.value = data_default[input.id].val;
-        data[input.id] = data_default[input.id].val;
-      }
-      input.style.backgroundColor = data_default[input.id].color;
-    });
-  }
+  const inputs = document.querySelectorAll("input");
+  inputs.forEach((input) => {
+    if (dataStorage && dataStorage[input.id]) {
+      input.value = dataStorage[input.id];
+      data[input.id] = dataStorage[input.id];
+    } else {
+      input.value = data_default[input.id].val;
+      data[input.id] = data_default[input.id].val;
+    }
+    input.style.backgroundColor = data_default[input.id].color;
+  });
   showHexDump(data);
   // save expected commands to div commands
   const commands_div = document.getElementById("commands");
