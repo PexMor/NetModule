@@ -1,9 +1,17 @@
+// taken from: hexdump -C eeprom.bin
+const source_hex = [
+  "00000000  4e 65 77 44 65 76 69 63  65 30 30 30 00 00 00 00  |NewDevice000....|",
+  "00000010  00 00 00 00 01 01 f5 00  65 6b 69 4d c2 1f 90 00  |........ekiM....|",
+  "00000020  ff ff ff 01 01 a8 c0 04  01 a8 c0 f0 0f ee 55 07  |..............U.|",
+  "00000030  5b 00 00 00 00 00 00 00  00 00 00 00 00 00 00 00  |[...............|",
+  "00000040  00 00 00 00 00 00 00 00  00 00 00 00 00 00 00 00  |................|",
+];
 const data_default = {
   ip: {
     val: "192.168.182.4",
     type: "ip",
     size: 4,
-    eeprom_addr: 0,
+    eeprom_addr: 39,//ok
     color: "#fcc",
     reverse: true,
   },
@@ -11,7 +19,7 @@ const data_default = {
     val: "8080",
     type: "port",
     size: 2,
-    eeprom_addr: 5,
+    eeprom_addr: 29,//ok
     color: "#cfc",
     reverse: true,
   },
@@ -19,7 +27,7 @@ const data_default = {
     val: "255.255.255.0",
     type: "ip",
     size: 4,
-    eeprom_addr: 8,
+    eeprom_addr: 31,//ok
     color: "#fcf",
     reverse: true,
   },
@@ -27,14 +35,14 @@ const data_default = {
     val: "192.168.182.1",
     type: "ip",
     size: 4,
-    eeprom_addr: 13,
+    eeprom_addr: 35,//ok
     color: "#ffc",
     reverse: true,
   },
   devname: {
     val: "NewDevice000",
     type: "str",
-    eeprom_addr: 18,
+    eeprom_addr: 0,//ok
     padding: 20,
     color: "#ccf",
     reverse: false,
@@ -43,7 +51,7 @@ const data_default = {
     val: "c2:4d:69:6b:65:00",
     type: "mac",
     size: 6,
-    eeprom_addr: 39,
+    eeprom_addr: 23,//ok
     color: "#cff",
     reverse: true,
   },
@@ -101,6 +109,16 @@ const prepEepromImg = (data) => {
   //   const ascii_pipe = "|".charCodeAt(0);
   //   eeprom_img.fill(ascii_pipe, 0, eeprom_size);
   eeprom_img.fill(0, 0, eeprom_size);
+  // load the source_hex into the EEPROM image
+  for (let hexrow in source_hex) {
+    let arr = hexrow.split(/\s+/);
+    // "00000000  4e 65 77 44 65 76 69 63  65 30 30 30 00 00 00 00  |NewDevice000....|",
+    let addr = parseInt(arr[0], 16);
+    for (let ii = 1; ii < arr.length - 1; ii++) {
+      let val = parseInt(arr[ii], 16);
+      eeprom_img[addr + ii] = val;
+    }
+  }
   for (let key in data) {
     const addr = data_default[key].eeprom_addr;
     const type = data_default[key].type;
