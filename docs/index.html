@@ -1,110 +1,80 @@
 <!DOCTYPE html>
 <html>
-  <head>
-    <meta charset="utf-8" />
-    <link
-      rel="icon"
-      href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🤖</text></svg>"
-    />
-    <title></title>
-    <meta name="description" content="HW-584v2-NetModule" />
-    <meta
-      name="viewport"
-      content="width=device-width, initial-scale=1, user-scalable=no"
-    />
-    <link rel="stylesheet" href="assets/style.css" />
-    <link
-      rel="stylesheet"
-      href="https://cdn.jsdelivr.net/npm/purecss@3.0.0/build/pure-min.css"
-      integrity="sha384-X38yfunGUhNzHpBaEBsWLO+A0HDYOQi8ufWDkZ0k9e0eXz/tH3II7uKZ9msv++Ls"
-      crossorigin="anonymous"
-    />
-  </head>
-  <body>
-    <div class="content">
-      <h1>Configure and flash the HW-584v2 (STM8S-105-S6)</h1>
-      <p>
-        This page is a simple guide to configure and flash the HW-584v2
-        (STM8S-105-S6) board.
-      </p>
-      <!-- Cretate pure css form -->
-      <form class="pure-form pure-form-stacked" id="form">
-        <p>Data stored in browser's local storage for later reuse</p>
-        <fieldset>
-          <legend>Configure and flash the HW-584v2 (STM8S-105-S6)</legend>
-          <label for="port">Select the http port:</label>
-          <input
-            type="number"
-            id="port"
-            name="port"
-            min="1"
-            max="65535"
-            required
-          />
-          <label for="ip">Enter the IP address:</label>
-          <input type="text" id="ip" name="ip" required />
-          <label for="gateway">Enter the gateway:</label>
-          <input type="text" id="gateway" name="gateway" required />
-          <label for="subnet">Enter the subnet mask:</label>
-          <input type="text" id="subnet" name="subnet" required />
-          <label for="mac">Enter the MAC address:</label>
-          <input type="text" id="mac" name="mac" required />
-          <label for="devname">Enter the device name:</label>
-          <input type="text" id="devname" name="devname" required />
-          <!--separator line-->
-          <hr />
-          <label for="mqtt_port">Select the MQTT port:</label>
-          <input
-            type="number"
-            id="mqtt_port"
-            name="mqtt_port"
-            min="1"
-            max="65535"
-            required
-          />
-          <label for="mqtt_ip">Enter the MQTT IP address:</label>
-          <input type="text" id="mqtt_ip" name="mqtt_ip" required />
-          <label for="mqtt_user">Enter the MQTT user:</label>
-          <input type="text" id="mqtt_user" name="mqtt_user" required />
-          <label for="mqtt_pass">Enter the MQTT password:</label>
-          <input type="text" id="mqtt_pass" name="mqtt_pass" required />
-        </fieldset>
-        <button
-          type="button"
-          class="pure-button pure-button-primary"
-          id="updateBut"
-        >
-          Update EEPROM data
-        </button>
-        <button
-          type="button"
-          class="pure-button pure-button-secondary"
-          id="downloadBut"
-        >
-          Download EEPROM data
-        </button>
-        <button
-          type="button"
-          class="pure-button pure-button-secondary"
-          id="resetBut"
-        >
-          Reset to defaults
-        </button>
-      </form>
-      <div id="commands" class="pre-formated">commands</div>
-      <br />
-      <div id="eeprom_div" class="pre-formated">eeprom</div>
-      <form class="pure-form pure-form-stacked" id="flash_form">
-        <textarea
-          id="flash_data"
-          name="flash_data"
-          rows="10"
-          cols="50"
-          disabled="disabled"
-        >
+
+<head>
+  <meta charset="utf-8" />
+  <link rel="icon"
+    href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🤖</text></svg>" />
+  <title></title>
+  <meta name="description" content="HW-584v2-NetModule" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
+  <link rel="stylesheet" href="assets/style.css" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/purecss@3.0.0/build/pure-min.css"
+    integrity="sha384-X38yfunGUhNzHpBaEBsWLO+A0HDYOQi8ufWDkZ0k9e0eXz/tH3II7uKZ9msv++Ls" crossorigin="anonymous" />
+</head>
+
+<body>
+  <div class="content">
+    <h1>Configure and flash the HW-584v2 (STM8S-105-S6)</h1>
+    <p>
+      This page is a simple guide to configure and flash the HW-584v2
+      (STM8S-105-S6) board.
+    </p>
+    <p>
+      GitHub Repos:
+    <ul>
+      <li>
+        <a href="https://github.com/PexMor/NetModule">https://github.com/PexMor/NetModule</a> - This repo
+      </li>
+      <li><a href="https://github.com/nielsonm236/NetMod-ServerApp">https://github.com/nielsonm236/NetMod-ServerApp</a> - The NetModule FW and manual</li>
+    </ul>
+    Made with ❤️ by <a href="https://github.com/PexMor">PexMor</a>
+    </p>
+    <div id="eeprom_div" class="pre-formated">eeprom</div>
+    <form class="pure-form pure-form-stacked" id="form">
+      <p>Data stored in browser's local storage for later reuse</p>
+      <fieldset>
+        <legend>Configure and flash the HW-584v2 (STM8S-105-S6)</legend>
+        <label for="port">Select the http port:</label>
+        <input type="number" id="port" name="port" min="1" max="65535" required />
+        <label for="ip">Enter the IP address:</label>
+        <input type="text" id="ip" name="ip" required />
+        <label for="gateway">Enter the gateway:</label>
+        <input type="text" id="gateway" name="gateway" required />
+        <label for="subnet">Enter the subnet mask:</label>
+        <input type="text" id="subnet" name="subnet" required />
+        <label for="mac">Enter the MAC address:</label>
+        <input type="text" id="mac" name="mac" required />
+        <label for="devname">Enter the device name:</label>
+        <input type="text" id="devname" name="devname" required />
+        <!--separator line-->
+        <hr />
+        <label for="mqtt_port">Select the MQTT port:</label>
+        <input type="number" id="mqtt_port" name="mqtt_port" min="1" max="65535" required />
+        <label for="mqtt_ip">Enter the MQTT IP address:</label>
+        <input type="text" id="mqtt_ip" name="mqtt_ip" required />
+        <label for="mqtt_user">Enter the MQTT user:</label>
+        <input type="text" id="mqtt_user" name="mqtt_user" required />
+        <label for="mqtt_pass">Enter the MQTT password:</label>
+        <input type="text" id="mqtt_pass" name="mqtt_pass" required />
+      </fieldset>
+      <button type="button" class="pure-button pure-button-primary" id="updateBut">
+        Update EEPROM data
+      </button>
+      <button type="button" class="pure-button pure-button-secondary" id="downloadBut">
+        Download EEPROM data
+      </button>
+      <button type="button" class="pure-button pure-button-secondary" id="resetBut">
+        Reset to defaults
+      </button>
+    </form>
+    <div id="commands" class="pre-formated">commands</div>
+    <form class="pure-form pure-form-stacked" id="flash_form">
+      <textarea id="flash_data" name="flash_data" rows="10" cols="50" disabled="disabled">
         </textarea>
-      </form>
-    </div>
-    <script src="assets/script.js" async defer></script>
-  </body>
+    </form>
+  </div>
+  <script src="assets/script.js" async defer></script>
+</body>
+
 </html>

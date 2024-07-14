@@ -6,12 +6,14 @@ const source_hex = [
   "00000030  5b 00 00 00 00 00 00 00  00 00 00 00 00 00 00 00  |[...............|",
   "00000040  00 00 00 00 00 00 00 00  00 00 00 00 00 00 00 00  |................|",
 ];
+// position in eeprom based on:
+// https://github.com/nielsonm236/NetMod-ServerApp/blob/master/NetworkModule/Main.c
 const data_default = {
   ip: {
     val: "192.168.182.4",
     type: "ip",
     size: 4,
-    eeprom_addr: 39,//ok
+    eeprom_addr: 40,
     color: "#fcc",
     reverse: true,
   },
@@ -19,7 +21,7 @@ const data_default = {
     val: "8080",
     type: "port",
     size: 2,
-    eeprom_addr: 29,//ok
+    eeprom_addr: 30,
     color: "#cfc",
     reverse: true,
   },
@@ -27,7 +29,7 @@ const data_default = {
     val: "255.255.255.0",
     type: "ip",
     size: 4,
-    eeprom_addr: 31,//ok
+    eeprom_addr: 32,
     color: "#fcf",
     reverse: true,
   },
@@ -35,14 +37,14 @@ const data_default = {
     val: "192.168.182.1",
     type: "ip",
     size: 4,
-    eeprom_addr: 35,//ok
+    eeprom_addr: 36,
     color: "#ffc",
     reverse: true,
   },
   devname: {
     val: "NewDevice000",
     type: "str",
-    eeprom_addr: 0,//ok
+    eeprom_addr: 0,
     padding: 20,
     color: "#ccf",
     reverse: false,
@@ -51,7 +53,7 @@ const data_default = {
     val: "c2:4d:69:6b:65:00",
     type: "mac",
     size: 6,
-    eeprom_addr: 23,//ok
+    eeprom_addr: 24,
     color: "#cff",
     reverse: true,
   },
@@ -60,7 +62,7 @@ const data_default = {
     val: "192.168.182.10",
     type: "ip",
     size: 4,
-    eeprom_addr: 46,
+    eeprom_addr: 50,
     color: "#faf",
     reverse: true,
   },
@@ -68,7 +70,7 @@ const data_default = {
     val: "1883",
     type: "port",
     size: 2,
-    eeprom_addr: 51,
+    eeprom_addr: 48,
     color: "#afa",
     reverse: true,
   },
@@ -76,15 +78,15 @@ const data_default = {
     val: "user",
     type: "str",
     eeprom_addr: 54,
-    padding: 20,
+    padding: 11,
     color: "#faa",
     reverse: false,
   },
   mqtt_pass: {
     val: "p4ssw0rd",
     type: "str",
-    eeprom_addr: 75,
-    padding: 20,
+    eeprom_addr: 65,
+    padding: 11,
     color: "#ccc",
     reverse: false,
   },
@@ -104,13 +106,15 @@ const expected_commands = [
 ];
 let eeprom_colors = [];
 let eeprom_floating_info = [];
+// const dbg_offset = 0x10 * 8;
+const dbg_offset = 0;
 const prepEepromImg = (data) => {
   // get ascii value of '|' and fill eeprom_img with it
   //   const ascii_pipe = "|".charCodeAt(0);
   //   eeprom_img.fill(ascii_pipe, 0, eeprom_size);
   eeprom_img.fill(0, 0, eeprom_size);
   // load the source_hex into the EEPROM image
-  for (let hexrow in source_hex) {
+  for (let hexrow of source_hex) {
     let arr = hexrow.split(/\s+/);
     // "00000000  4e 65 77 44 65 76 69 63  65 30 30 30 00 00 00 00  |NewDevice000....|",
     let addr = parseInt(arr[0], 16);
@@ -120,7 +124,7 @@ const prepEepromImg = (data) => {
     }
   }
   for (let key in data) {
-    const addr = data_default[key].eeprom_addr;
+    const addr = data_default[key].eeprom_addr + dbg_offset;
     const type = data_default[key].type;
     const padding = data_default[key].padding;
     const reverse = data_default[key].reverse;
@@ -186,22 +190,29 @@ const makeEepromImg = (data) => {
     const line = [];
     const ascii_line = [];
     for (let j = 0; j < 16; j++) {
-      const color = eeprom_colors[i + j];
-      let hex = eeprom_img[i + j].toString(16).padStart(2, "0");
-      hex = `<span style="background-color:${color}" title="${
-        eeprom_floating_info[i + j]
-      }" >${hex}</span>`;
+      let addr = i + j;
+      let color = eeprom_colors[addr];
+      // used for offseted debugging the eeprom contents
+      // if (addr >= dbg_offset) {
+      //   color = eeprom_colors[addr - dbg_offset];
+      // }
+      let hex = eeprom_img[addr].toString(16).padStart(2, "0");
+      hex = `<span style="background-color:${color}" title="${eeprom_floating_info[addr]}" >${hex}</span>`;
       line.push(hex);
       let ascii =
-        eeprom_img[i + j] >= 32 && eeprom_img[i + j] <= 126
-          ? String.fromCharCode(eeprom_img[i + j])
+        eeprom_img[addr] >= 32 && eeprom_img[addr] <= 126
+          ? String.fromCharCode(eeprom_img[addr])
           : ".";
-      ascii = `<span style="background-color:${color}" title="${
-        eeprom_floating_info[i + j]
-      }">${ascii}</span>`;
+      ascii = `<span style="background-color:${color}" title="${eeprom_floating_info[addr]}">${ascii}</span>`;
       ascii_line.push(ascii);
     }
-    hexdump.push(line.join(" ") + "  " + ascii_line.join(""));
+    hexdump.push(
+      i.toString(16).padStart(4, "0") +
+        " " +
+        line.join(" ") +
+        "  " +
+        ascii_line.join("")
+    );
   }
   return hexdump;
 };
