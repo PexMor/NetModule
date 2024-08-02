@@ -35,7 +35,7 @@
     <a href="#buttons" class="pure-button pure-button-secondary">Scroll to buttons</a>
     <br />
     <div id="eeprom_div" class="pre-formated">eeprom</div>
-    <form class="pure-form pure-form-stacked" id="data_form">
+    <form class="pure-form pure-form-stacked" id="data_form" onsubmit="return false">
       <p>Data stored in browser's local storage for later reuse</p>
       <fieldset>
         <legend>Configure and flash the HW-584v2 (STM8S-105-S6)</legend>
@@ -51,8 +51,10 @@
         <input type="text" id="mac" name="mac" required />
         <label for="devname">Enter the device name:</label>
         <input type="text" id="devname" name="devname" required />
-        <!--separator line-->
-        <hr />
+      </fieldset>
+      <br />
+      <fieldset>
+        <legend>MQTT parameters</legend>
         <label for="mqtt_port">Select the MQTT port:</label>
         <input type="number" id="mqtt_port" name="mqtt_port" min="1" max="65535" required />
         <label for="mqtt_ip">Enter the MQTT IP address:</label>
@@ -62,6 +64,7 @@
         <label for="mqtt_pass">Enter the MQTT password:</label>
         <input type="text" id="mqtt_pass" name="mqtt_pass" required />
       </fieldset>
+      <br />
       <fieldset>
         <legend>Output parameters</legend>
         <label for="filestem">File name <b>stem</b> (without extension):</label>
@@ -83,6 +86,7 @@
         <label for="header">Header:</label>
         <input type="text" id="header" name="header" value="NetModule-eeprom-config" required />
       </fieldset>
+      <br />
       <a name="buttons">Choose action:</a><br />
       <button type="button" class="pure-button pure-button-primary" id="updateBut">
         Update EEPROM data
@@ -95,11 +99,37 @@
       </button>
     </form>
     <div id="commands" class="pre-formated">commands</div>
-    <form class="pure-form pure-form-stacked" id="flash_form">
-      <textarea id="flash_data" name="flash_data" rows="10" cols="50" disabled="disabled">
-        </textarea>
+    <form id="upload_form" class="pure-form pure-form-stacked" onsubmit="return false">
+      <fieldset>
+        <legend>Upload the S-Rec or Hex file for editing</legend>
+        <div id="file-info">place for file info</div>
+        <label for="file">Select a file:
+          <input type="file" id="file" name="file" accept=".srec,.hex,.sx" />
+        </label>
+        <br />
+        <button type="button" class="pure-button pure-button-primary" id="uploadBut">
+          Process file (S-Rec or Hex)
+        </button>
+        <br />
+        <span class="note">processing is done within browser w/o upload</span>
+      </fieldset>
     </form>
+    <h3>Output hex for copy and paste</h3>
+    <form class="pure-form pure-form-stacked" id="flash_form" onsubmit="return false">
+      <textarea id="flash_data" name="flash_data" rows="10" cols="50" disabled="disabled">
+      </textarea>
+    </form>
+    <button type="button" class="pure-button pure-button-primary" id="copyBut">
+      Copy to clipboard
+    </button>
+    <div class="footer" style="display: inline-block">
+      <p>
+        <a href="https://pexmor.github.io/NetModule/">NetModule</a> - HW-584v2-NetModule
+      </p>
+    </div>
   </div>
+  <script src="assets/source_hex.js" async defer></script>
+  <script src="assets/eeprom_desc.js" async defer></script>
   <script src="assets/script.js" async defer></script>
 </body>
 

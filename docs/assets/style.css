@@ -184,3 +184,24 @@ h3 {
   margin: 10px 0;
   display: inline-block;
 }
+legend {
+  margin-top: 2em;
+  font-weight: bold;
+}
+fieldset {
+  display: inline-block;
+}
+.note {
+  color: #999;
+  font-size: 90%;
+  margin: 0;
+}
+#file-info {
+  border: 1px dotted #fcc;
+  border-radius: 1em;
+  padding: 0.5em;
+  background-color: #eee;
+}
+#file-info th {
+  text-align: right;
+}

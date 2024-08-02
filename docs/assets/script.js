@@ -1,98 +1,3 @@
-// taken from: hexdump -C eeprom.bin
-const source_hex = [
-  "00000000  4e 65 77 44 65 76 69 63  65 30 30 30 00 00 00 00  |NewDevice000....|",
-  "00000010  00 00 00 00 01 01 f5 00  65 6b 69 4d c2 1f 90 00  |........ekiM....|",
-  "00000020  ff ff ff 01 01 a8 c0 04  01 a8 c0 f0 0f ee 55 07  |..............U.|",
-  "00000030  5b 00 00 00 00 00 00 00  00 00 00 00 00 00 00 00  |[...............|",
-  "00000040  00 00 00 00 00 00 00 00  00 00 00 00 00 00 00 00  |................|",
-];
-// position in eeprom based on:
-// https://github.com/nielsonm236/NetMod-ServerApp/blob/master/NetworkModule/Main.c
-const data_default = {
-  ip: {
-    val: "192.168.182.4",
-    type: "ip",
-    size: 4,
-    eeprom_addr: 40,
-    color: "#fcc",
-    reverse: true,
-  },
-  port: {
-    val: "8080",
-    type: "port",
-    size: 2,
-    eeprom_addr: 30,
-    color: "#cfc",
-    reverse: true,
-  },
-  subnet: {
-    val: "255.255.255.0",
-    type: "ip",
-    size: 4,
-    eeprom_addr: 32,
-    color: "#fcf",
-    reverse: true,
-  },
-  gateway: {
-    val: "192.168.182.1",
-    type: "ip",
-    size: 4,
-    eeprom_addr: 36,
-    color: "#ffc",
-    reverse: true,
-  },
-  devname: {
-    val: "NewDevice000",
-    type: "str",
-    eeprom_addr: 0,
-    padding: 20,
-    color: "#ccf",
-    reverse: false,
-  },
-  mac: {
-    val: "c2:4d:69:6b:65:00",
-    type: "mac",
-    size: 6,
-    eeprom_addr: 24,
-    color: "#cff",
-    reverse: true,
-  },
-  // -------------------
-  mqtt_ip: {
-    val: "192.168.182.10",
-    type: "ip",
-    size: 4,
-    eeprom_addr: 50,
-    color: "#faf",
-    reverse: true,
-  },
-  mqtt_port: {
-    val: "1883",
-    type: "port",
-    size: 2,
-    eeprom_addr: 48,
-    color: "#afa",
-    reverse: true,
-  },
-  mqtt_user: {
-    val: "user",
-    type: "str",
-    eeprom_addr: 54,
-    padding: 11,
-    color: "#faa",
-    reverse: false,
-  },
-  mqtt_pass: {
-    val: "p4ssw0rd",
-    type: "str",
-    eeprom_addr: 65,
-    padding: 11,
-    color: "#ccc",
-    reverse: false,
-  },
-};
-const eeprom_size = 1024;
-const eeprom_img = new Uint8Array(eeprom_size);
 // list expected commands
 const expected_commands = [
   "# read main flash from stm8s105s6",
@@ -125,6 +30,181 @@ const computeChecksum = (data) => {
   }
   sum = (sum ^ 0xff) & 0xff;
   return sum;
+};
+const srecTypes = {
+  S0: "header record",
+  S1: "data record, 16-bit address",
+  S2: "data record, 24-bit address",
+  S3: "data record, 32-bit address",
+  S4: "reserved",
+  S5: "record count, 16-bit",
+  S6: "record count, 24-bit",
+  S7: "start address record, 32-bit",
+  S8: "start address record, 24-bit",
+  S9: "start address record, 16-bit",
+};
+const is_overlapping = (a_start, a_end, b_start, b_end) => {
+  // check if two intervals are overlapping
+  let overlap = false;
+  if (a_start <= b_end && b_start <= a_end) {
+    // |---a---|
+    //     |---b---|
+    overlap = true;
+  } else if (b_start <= a_end && a_start <= b_end) {
+    //     |---a---|
+    // |---b---|
+    overlap = true;
+  } else if (a_start <= b_start && a_end >= b_end) {
+    // |---a--------|
+    //   |---b---|
+    overlap = true;
+  } else if (b_start <= a_start && b_end >= a_end) {
+    //   |---a---|
+    // |---b--------|
+    overlap = true;
+  }
+  return overlap;
+};
+const merge_ranges = (ranges) => {
+  // merge overlapping ranges
+  ranges.sort((a, b) => a[0] - b[0]);
+  // add first range to merged_ranges
+  let merged_ranges = [];
+  let first_range = ranges.shift();
+  merged_ranges.push({ s: first_range[0], e: first_range[1] });
+  for (let range of ranges) {
+    let start = range[0];
+    let end = range[1];
+    let updated = false;
+    let new_merged_ranges = [];
+    for (let idx = 0; idx < merged_ranges.length; idx++) {
+      let m_start = merged_ranges[idx].s;
+      let m_end = merged_ranges[idx].e;
+      if (is_overlapping(start, end, m_start, m_end)) {
+        // get new start and end
+        start = Math.min(start, m_start);
+        end = Math.max(end, m_end);
+        updated = true;
+      } else {
+        new_merged_ranges.push({ s: m_start, e: m_end });
+      }
+    }
+    new_merged_ranges.push({ s: start, e: end });
+    new_merged_ranges.sort((a, b) => a.s - b.e);
+    merged_ranges = new_merged_ranges;
+  }
+  return merged_ranges.map((v) => [v.s, v.e]);
+};
+const readSrecFormat = (srec_str) => {
+  // read srec file and convert to eeprom_img
+  // convert srec format to eeprom_img
+  // Example: S214000000004e657744657669636530303
+  // S01400004E6574776F726B4D6F64756C652E736D3855
+  let tmp_eeprom_img = new Uint8Array(eeprom_size);
+  const srec_lines = srec_str.split(/\r?\n/);
+  // iterate over srec lines and convert to eeprom_img
+  let type_counter = {};
+  let address_ranges = [];
+  // get address offset
+  let addr_offset = parseInt(document.getElementById("address").value, 16);
+  for (let data_line of srec_lines) {
+    data_line = data_line.trim();
+    if (data_line === "") continue;
+    // get data from srec line
+    const record_type = data_line.slice(0, 2);
+    if (record_type in type_counter) {
+      type_counter[record_type] += 1;
+    } else {
+      type_counter[record_type] = 1;
+    }
+    let has_data = false;
+    let data_len = undefined;
+    let addr = undefined;
+    let data_hex = undefined;
+    let data_bytes = undefined;
+    if (record_type === "S0") {
+      // header record
+    } else if (record_type === "S1") {
+      // data record, 16-bit address
+      // structure of data record
+      // S1 14 0000 4e657744657669636530303 xx
+      // |  |  |    |                       |
+      // |  |  |    |                       checksum
+      // |  |  |    data
+      // |  |  address 16-bit
+      // |  data length (address+data+chesum)
+      // record type
+      data_len = parseInt(data_line.slice(2, 4), 16);
+      addr = parseInt(data_line.slice(4, 8), 16);
+      data_hex = data_line.slice(8, -2);
+      data_bytes = data_hex.match(/.{2}/g).map((v) => parseInt(v, 16));
+      has_data = true;
+    } else if (record_type === "S2") {
+      // data record, 24-bit address
+      // structure of data record
+      // S2 14 000000 4e657744657669636530303 xx
+      // |  |  |      |                       |
+      // |  |  |      |                       checksum
+      // |  |  |      data
+      // |  |  address 24-bit
+      // |  data length (address+data+chesum)
+      // record type
+      data_len = parseInt(data_line.slice(2, 4), 16);
+      addr = parseInt(data_line.slice(4, 10), 16);
+      data_hex = data_line.slice(10, -2);
+      data_bytes = data_hex.match(/.{2}/g).map((v) => parseInt(v, 16));
+      has_data = true;
+    } else if (record_type === "S3") {
+      // data record, 32-bit address
+      // structure of data record
+      // S1 14 00000000 4e657744657669636530303 xx
+      // |  |  |        |                       |
+      // |  |  |        |                       checksum
+      // |  |  |        data
+      // |  |  address 32-bit
+      // |  data length (address+data+chesum)
+      // record type
+      data_len = parseInt(data_line.slice(2, 4), 16);
+      addr = parseInt(data_line.slice(4, 12), 16);
+      data_hex = data_line.slice(12, -2);
+      data_bytes = data_hex.match(/.{2}/g).map((v) => parseInt(v, 16));
+      has_data = true;
+    }
+    if (!has_data) {
+      continue;
+    }
+    // convert data to eeprom_img
+    let cvt_addr = addr - addr_offset;
+    for (let ii = 0; ii < data_bytes.length; ii++) {
+      tmp_eeprom_img[cvt_addr + ii] = data_bytes[ii];
+    }
+    // save address range
+    address_ranges.push([addr, addr + data_bytes.length]);
+  }
+  merged_ranges = merge_ranges(address_ranges);
+  let elFileInfo = document.getElementById("file-info");
+  let fileInfo = [];
+  for (let key in type_counter) {
+    fileInfo.push(
+      `<tr><th>${srecTypes[key]}</th><td>(${key})</td><td>${type_counter[key]}</td></tr>`
+    );
+  }
+  let html = "<table id='file-info'>" + fileInfo.join("\n") + "</table>";
+  html += "<h4>Merged address ranges</h4>";
+  html += "<p>All addresses are displayed in hexadecimal</p>";
+  html += "<table>";
+  for (let range of merged_ranges) {
+    html += `<tr><td>${range[0].toString(
+      16
+    )}</td><td>..</td><td>${range[1].toString(16)}</td><td>len: ${
+      range[1] - range[0]
+    } (0x${(range[1] - range[0]).toString(16)})</td></tr>`;
+  }
+  html += "</table>";
+  elFileInfo.innerHTML = html;
+  // console.log(tmp_eeprom_img);
+  // showHexDump(dataValues);
+  // localStorage.setItem("dataStorage", JSON.stringify(dataValues));
 };
 const makeSrecFormat = (header_str, eol_style, addr_offset) => {
   // console.log("makeSrecFormat", header_str, eol_style, addr_offset);
@@ -356,6 +436,30 @@ const onLoad = () => {
   resetBut.addEventListener("click", onResetBut);
   const downloadBut = document.getElementById("downloadBut");
   downloadBut.addEventListener("click", onDownloadBut);
+  // copyBut
+  const copyBut = document.getElementById("copyBut");
+  copyBut.addEventListener("click", () => {
+    const eeprom_div = document.getElementById("eeprom_div");
+    const range = document.createRange();
+    range.selectNode(eeprom_div);
+    window.getSelection().removeAllRanges();
+    window.getSelection().addRange(range);
+    document.execCommand("copy");
+    window.getSelection().removeAllRanges();
+  });
+  // file input
+  const fileInput = document.getElementById("file");
+  fileInput.addEventListener("change", (event) => {
+    const file = event.target.files[0];
+    parseFile(file);
+  });
+  // uploadBut
+  const uploadBut = document.getElementById("uploadBut");
+  uploadBut.addEventListener("click", (event) => {
+    const fileInput = document.getElementById("file");
+    const file = fileInput.files[0];
+    parseFile(file);
+  });
   const hideShowHexDumpBut = document.getElementById("hideShowHexDumpBut");
   hideShowHexDumpBut.addEventListener("click", () => {
     const eeprom_div = document.getElementById("eeprom_div");
@@ -394,3 +498,20 @@ const getDataFromForm = (inputs) => {
   });
   return data;
 };
+function parseFile(file) {
+  const reader = new FileReader();
+  reader.onload = (event) => {
+    const srec_str = event.target.result;
+    if (srec_str.startsWith("S")) {
+      // srec format
+      console.log("srec format");
+      readSrecFormat(srec_str);
+    } else if (srec_str.startsWith(":")) {
+      // hex format
+      console.log("hex format");
+    } else {
+      console.error("Unknown format");
+    }
+  };
+  reader.readAsText(file);
+}
