@@ -377,7 +377,16 @@ const onUpdateBut = () => {
   showHexDump(dataValues);
   localStorage.setItem("dataStorage", JSON.stringify(dataValues));
 };
-
+const onDownloadZipBut = () => {
+  let zip = new JSZip();
+  zip.file("Hello.txt", "Hello World\n");
+  // var img = zip.folder("images");
+  // img.file("smile.gif", imgData, { base64: true });
+  zip.generateAsync({ type: "blob" }).then(function (content) {
+    // see FileSaver.js
+    saveAs(content, getDTFilename() + ".zip");
+  });
+};
 const onDownloadBut = () => {
   const file_type = document.getElementById("filetype").value;
   let eeprom_img_b64;
@@ -400,12 +409,7 @@ const onDownloadBut = () => {
     "data:application/octet-stream;base64," + eeprom_img_b64;
   const downloadLink = document.createElement("a");
   downloadLink.href = eeprom_img_b64_url;
-  let file_name_stem = document.getElementById("filestem").value;
-  // add timestamp to file name
-  let now_iso = new Date().toISOString();
-  // remove milliseconds part of the iso string
-  now_iso = now_iso.replace(/\.\d+Z$/, "Z");
-  file_name_stem += "-" + now_iso.replace(/[:-]/g, "").replace(/T/, "-");
+  let file_name_stem = getDTFilename();
   if (file_type === "srec") {
     downloadLink.download = file_name_stem + ".srec";
   } else {
@@ -416,7 +420,7 @@ const onDownloadBut = () => {
   // wait for download to finish and then remove the link
   setTimeout(() => {
     downloadLink.remove();
-    downloadLink.parentNode.removeChild(downloadLink);
+    //downloadLink.parentNode.removeChild(downloadLink);
   }, 1000);
 };
 const onResetBut = () => {
@@ -430,12 +434,14 @@ const onResetBut = () => {
   showHexDump(data);
 };
 const onLoad = () => {
-  const updateBut = document.getElementById("updateBut");
-  updateBut.addEventListener("click", onUpdateBut);
+  // const updateBut = document.getElementById("updateBut");
+  // updateBut.addEventListener("click", onUpdateBut);
   const resetBut = document.getElementById("resetBut");
   resetBut.addEventListener("click", onResetBut);
   const downloadBut = document.getElementById("downloadBut");
   downloadBut.addEventListener("click", onDownloadBut);
+  const downloadZipBut = document.getElementById("downloadZipBut");
+  downloadZipBut.addEventListener("click", onDownloadZipBut);
   // copyBut
   const copyBut = document.getElementById("copyBut");
   copyBut.addEventListener("click", () => {
@@ -454,23 +460,23 @@ const onLoad = () => {
     parseFile(file);
   });
   // uploadBut
-  const uploadBut = document.getElementById("uploadBut");
-  uploadBut.addEventListener("click", (event) => {
-    const fileInput = document.getElementById("file");
-    const file = fileInput.files[0];
-    parseFile(file);
-  });
-  const hideShowHexDumpBut = document.getElementById("hideShowHexDumpBut");
-  hideShowHexDumpBut.addEventListener("click", () => {
-    const eeprom_div = document.getElementById("eeprom_div");
-    if (eeprom_div.style.display === "none") {
-      hideShowHexDumpBut.innerText = "Hide EEPROM Hexdump";
-      eeprom_div.style.display = "";
-    } else {
-      hideShowHexDumpBut.innerText = "Show EEPROM Hexdump";
-      eeprom_div.style.display = "none";
-    }
-  });
+  // const uploadBut = document.getElementById("uploadBut");
+  // uploadBut.addEventListener("click", (event) => {
+  //   const fileInput = document.getElementById("file");
+  //   const file = fileInput.files[0];
+  //   parseFile(file);
+  // });
+  // const hideShowHexDumpBut = document.getElementById("hideShowHexDumpBut");
+  // hideShowHexDumpBut.addEventListener("click", () => {
+  //   const eeprom_div = document.getElementById("eeprom_div");
+  //   if (eeprom_div.style.display === "none") {
+  //     hideShowHexDumpBut.innerText = "Hide EEPROM Hexdump";
+  //     eeprom_div.style.display = "";
+  //   } else {
+  //     hideShowHexDumpBut.innerText = "Show EEPROM Hexdump";
+  //     eeprom_div.style.display = "none";
+  //   }
+  // });
   const dataStorage = JSON.parse(localStorage.getItem("dataStorage"));
   let data = {};
   const inputs = getInputsFromDataForm();
@@ -483,6 +489,10 @@ const onLoad = () => {
       data[input.id] = data_default[input.id].val;
     }
     input.style.backgroundColor = data_default[input.id].color;
+    input.addEventListener("change", () => {
+      //data[input.id] = input.value;
+      onUpdateBut();
+    });
   });
   showHexDump(data);
   // save expected commands to div commands
@@ -498,6 +508,16 @@ const getDataFromForm = (inputs) => {
   });
   return data;
 };
+function getDTFilename() {
+  let file_name_stem = document.getElementById("filestem").value;
+  // add timestamp to file name
+  let now_iso = new Date().toISOString();
+  // remove milliseconds part of the iso string
+  now_iso = now_iso.replace(/\.\d+Z$/, "Z");
+  file_name_stem += "-" + now_iso.replace(/[:-]/g, "").replace(/T/, "-");
+  return file_name_stem;
+}
+
 function parseFile(file) {
   const reader = new FileReader();
   reader.onload = (event) => {

@@ -8,126 +8,204 @@
   <title></title>
   <meta name="description" content="HW-584v2-NetModule" />
   <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
-  <link rel="stylesheet" href="assets/style.css" />
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/purecss@3.0.0/build/pure-min.css"
     integrity="sha384-X38yfunGUhNzHpBaEBsWLO+A0HDYOQi8ufWDkZ0k9e0eXz/tH3II7uKZ9msv++Ls" crossorigin="anonymous" />
+  <link rel="stylesheet" href="assets/style.css" />
+  <link rel="stylesheet" href="assets/tabset.css" />
 </head>
 
 <body>
-  <div class="content">
-    <h1>Configure and flash the HW-584v2 (STM8S-105-S6)</h1>
-    <p>
-      This page is a simple guide to configure and flash the HW-584v2
-      (STM8S-105-S6) board.
-    </p>
-    <p>
-      GitHub Repos:
-    <ul>
-      <li>
-        <a href="https://github.com/PexMor/NetModule">https://github.com/PexMor/NetModule</a> - This repo
-      </li>
-      <li><a href="https://github.com/nielsonm236/NetMod-ServerApp">https://github.com/nielsonm236/NetMod-ServerApp</a>
-        - The NetModule FW and manual</li>
-    </ul>
-    Made with ❤️ by <a href="https://github.com/PexMor">PexMor</a>
-    </p>
-    <button id="hideShowHexDumpBut" class="pure-button pure-button-primary">Hide EEPROM Hexdump</button>
+  <div class="container">
+    <div class="tabset">
+      <!-- Tab 1 -->
+      <input type="radio" name="tabset" id="tab1" aria-controls="info" checked>
+      <label for="tab1">Info</label>
+      <!-- Tab 2 -->
+      <input type="radio" name="tabset" id="tab2" aria-controls="config">
+      <label for="tab2">Config</label>
+      <!-- Tab 3 -->
+      <input type="radio" name="tabset" id="tab3" aria-controls="download">
+      <label for="tab3">Download</label>
+      <!-- Tab 4 -->
+      <input type="radio" name="tabset" id="tab4" aria-controls="srec">
+      <label for="tab4">S-Rec</label>
+      <!-- Tab 5 -->
+      <input type="radio" name="tabset" id="tab5" aria-controls="project">
+      <label for="tab5">Project</label>
+      <!-- Tab 6 -->
+      <input type="radio" name="tabset" id="tab6" aria-controls="hexview">
+      <label for="tab6">Hex View</label>
+      <!-- Tab 7 -->
+      <input type="radio" name="tabset" id="tab7" aria-controls="therest">
+      <label for="tab7">The rest</label>
+
+      <div class="tab-panels">
+        <section id="info" class="tab-panel">
+          <h2>Info</h2>
+          <p>Configure and flash the HW-584v2 (STM8S-105-S6)</p>
+          <p>
+            This page is a simple guide to configure and flash the HW-584v2
+            (STM8S-105-S6) board.
+          </p>
+          <p>
+            GitHub Repos:
+          <ul>
+            <li>
+              <a href="https://github.com/PexMor/NetModule">https://github.com/PexMor/NetModule</a> - This repo
+            </li>
+            <li><a
+                href="https://github.com/nielsonm236/NetMod-ServerApp">https://github.com/nielsonm236/NetMod-ServerApp</a>
+              - The NetModule FW and manual</li>
+          </ul>
+          Made with ❤️ by <a href="https://github.com/PexMor">PexMor</a>
+          </p>
+        </section>
+        <section id="config" class="tab-panel">
+          <h2>Config</h2>
+          <form class="pure-form pure-form-stacked" id="data_form" onsubmit="return false">
+            <p>Data stored in browser's local storage for later reuse</p>
+            <fieldset>
+              <legend>Configure and flash the HW-584v2 (STM8S-105-S6)</legend>
+              <label for="port">Select the http port:
+                <input type="number" id="port" name="port" min="1" max="65535" required />
+              </label>
+              <label for="ip">Enter the IP address:
+                <input type="text" id="ip" name="ip" required />
+              </label>
+              <label for="gateway">Enter the gateway:
+                <input type="text" id="gateway" name="gateway" required />
+              </label>
+              <label for="subnet">Enter the subnet mask:
+                <input type="text" id="subnet" name="subnet" required />
+              </label>
+              <label for="mac">Enter the MAC address:
+                <input type="text" id="mac" name="mac" required />
+              </label>
+              <label for="devname">Enter the device name:
+                <input type="text" id="devname" name="devname" required />
+              </label>
+            </fieldset>
+            <br />
+            <fieldset>
+              <legend>MQTT parameters</legend>
+              <label for="mqtt_port">Select the MQTT port:
+                <input type="number" id="mqtt_port" name="mqtt_port" min="1" max="65535" required />
+              </label>
+              <label for="mqtt_ip">Enter the MQTT IP address:
+                <input type="text" id="mqtt_ip" name="mqtt_ip" required />
+              </label>
+              <label for="mqtt_user">Enter the MQTT user:
+                <input type="text" id="mqtt_user" name="mqtt_user" required />
+              </label>
+              <label for="mqtt_pass">Enter the MQTT password:
+                <input type="text" id="mqtt_pass" name="mqtt_pass" required />
+              </label>
+            </fieldset>
+            <br />
+            field change trigger automatic update of the EEPROM data
+            <br />
+            <!--button type="button" class="pure-button pure-button-primary" id="updateBut">
+              Update EEPROM data
+            </button-->
+            <button type="button" class="pure-button" style="background-color: lightpink;" id="resetBut">
+              Reset to defaults
+            </button>
+          </form>
+        </section>
+        <section id="download" class="tab-panel">
+          <h2>Download</h2>
+          <form class="pure-form pure-form-stacked" id="data_form" onsubmit="return false">
+            <fieldset>
+              <legend>Output parameters</legend>
+              <label for="filestem">File name <b>stem</b> (without extension):</label>
+              <input type="text" id="filestem" name="filestem" value="eeprom" required />
+              <label for="adddt">Add datetime:</label>
+              <input type="checkbox" id="adddt" name="adddt" checked />
+              <label for="filetype">File type (Binary or Motorola S-Record):</label>
+              <select id="filetype" name="filetype" required>
+                <option value="img">Binary (.img)</option>
+                <option value="srec" selected="selected">Motorola S-Record (.srec)</option>
+              </select>
+              <label for="lineending">Choose line ending (for S-Record text file, Windows=Cr+LF or
+                Unix/Linux=LF):</label>
+              <select id="lineending" name="lineending" required>
+                <option value="lf">LF (Unix)</option>
+                <option value="crlf">CRLF (Windows)</option>
+              </select>
+              <label for="address">Starting address (in hex):</label>
+              <input type="number" id="address" name="address" min="0" value="4000" required />
+              <label for="header">Header:</label>
+              <input type="text" id="header" name="header" value="NetModule-eeprom-config" required />
+            </fieldset>
+            <br />
+            <a name="buttons">Choose action:</a><br />
+
+            <button type="button" class="pure-button pure-button-primary" id="downloadBut">
+              Download EEPROM data
+            </button>
+            <button type="button" class="pure-button pure-button-primary" id="downloadZipBut">
+              Download ZIP
+            </button>
+          </form>
+
+        </section>
+        <section id="srec" class="tab-panel">
+          <h2>Motorola S-Rec</h2>
+          <form id="upload_form" class="pure-form pure-form-stacked" onsubmit="return false">
+            <fieldset>
+              <legend>Upload the S-Rec or Hex file for editing</legend>
+              <div id="file-info">place for file info</div>
+              <label for="file" class="pure-button pure-button-primary">Select a file:
+                <input type="file" id="file" name="file" style="display: none" accept=".srec,.hex,.sx" />
+              </label>
+              <br />
+              <!--button type="button" class="pure-button pure-button-primary" id="uploadBut">
+                Process file (S-Rec or Hex)
+              </button-->
+              <br />
+              <span class="note">processing is done within browser w/o upload</span>
+            </fieldset>
+          </form>
+        </section>
+        <section id="project" class="tab-panel">
+          <h2>Project</h2>
+          <p>Project details</p>
+        </section>
+        <section id="hexview" class="tab-panel">
+          <h2>Hex View</h2>
+          <div id="eeprom_div" class="pre-formated">eeprom</div>
+        </section>
+        <section id="therest" class="tab-panel">
+          <h2>The Rest</h2>
+          <div id="commands" class="pre-formated">commands</div>
+
+          <h3>Output hex for copy and paste</h3>
+          <form class="pure-form pure-form-stacked" id="flash_form" onsubmit="return false">
+            <textarea id="flash_data" name="flash_data" rows="10" cols="50" disabled="disabled"></textarea>
+          </form>
+          <button type="button" class="pure-button pure-button-primary" id="copyBut">
+            Copy to clipboard
+          </button>
+        </section>
+      </div>
+
+    </div>
+
+    <!--button id="hideShowHexDumpBut" class="pure-button pure-button-primary">Hide EEPROM Hexdump</button>
     <a href="#buttons" class="pure-button pure-button-secondary">Scroll to buttons</a>
-    <br />
-    <div id="eeprom_div" class="pre-formated">eeprom</div>
-    <form class="pure-form pure-form-stacked" id="data_form" onsubmit="return false">
-      <p>Data stored in browser's local storage for later reuse</p>
-      <fieldset>
-        <legend>Configure and flash the HW-584v2 (STM8S-105-S6)</legend>
-        <label for="port">Select the http port:</label>
-        <input type="number" id="port" name="port" min="1" max="65535" required />
-        <label for="ip">Enter the IP address:</label>
-        <input type="text" id="ip" name="ip" required />
-        <label for="gateway">Enter the gateway:</label>
-        <input type="text" id="gateway" name="gateway" required />
-        <label for="subnet">Enter the subnet mask:</label>
-        <input type="text" id="subnet" name="subnet" required />
-        <label for="mac">Enter the MAC address:</label>
-        <input type="text" id="mac" name="mac" required />
-        <label for="devname">Enter the device name:</label>
-        <input type="text" id="devname" name="devname" required />
-      </fieldset>
-      <br />
-      <fieldset>
-        <legend>MQTT parameters</legend>
-        <label for="mqtt_port">Select the MQTT port:</label>
-        <input type="number" id="mqtt_port" name="mqtt_port" min="1" max="65535" required />
-        <label for="mqtt_ip">Enter the MQTT IP address:</label>
-        <input type="text" id="mqtt_ip" name="mqtt_ip" required />
-        <label for="mqtt_user">Enter the MQTT user:</label>
-        <input type="text" id="mqtt_user" name="mqtt_user" required />
-        <label for="mqtt_pass">Enter the MQTT password:</label>
-        <input type="text" id="mqtt_pass" name="mqtt_pass" required />
-      </fieldset>
-      <br />
-      <fieldset>
-        <legend>Output parameters</legend>
-        <label for="filestem">File name <b>stem</b> (without extension):</label>
-        <input type="text" id="filestem" name="filestem" value="eeprom" required />
-        <label for="adddt">Add datetime:</label>
-        <input type="checkbox" id="adddt" name="adddt" checked />
-        <label for="filetype">File type (Binary or Motorola S-Record):</label>
-        <select id="filetype" name="filetype" required>
-          <option value="img">Binary (.img)</option>
-          <option value="srec" selected="selected">Motorola S-Record (.srec)</option>
-        </select>
-        <label for="lineending">Choose line ending (for S-Record text file, Windows=Cr+LF or Unix/Linux=LF):</label>
-        <select id="lineending" name="lineending" required>
-          <option value="lf">LF (Unix)</option>
-          <option value="crlf">CRLF (Windows)</option>
-        </select>
-        <label for="address">Starting address (in hex):</label>
-        <input type="number" id="address" name="address" min="0" value="4000" required />
-        <label for="header">Header:</label>
-        <input type="text" id="header" name="header" value="NetModule-eeprom-config" required />
-      </fieldset>
-      <br />
-      <a name="buttons">Choose action:</a><br />
-      <button type="button" class="pure-button pure-button-primary" id="updateBut">
-        Update EEPROM data
-      </button>
-      <button type="button" class="pure-button pure-button-secondary" id="downloadBut">
-        Download EEPROM data
-      </button>
-      <button type="button" class="pure-button pure-button-secondary" id="resetBut">
-        Reset to defaults
-      </button>
-    </form>
-    <div id="commands" class="pre-formated">commands</div>
-    <form id="upload_form" class="pure-form pure-form-stacked" onsubmit="return false">
-      <fieldset>
-        <legend>Upload the S-Rec or Hex file for editing</legend>
-        <div id="file-info">place for file info</div>
-        <label for="file">Select a file:
-          <input type="file" id="file" name="file" accept=".srec,.hex,.sx" />
-        </label>
-        <br />
-        <button type="button" class="pure-button pure-button-primary" id="uploadBut">
-          Process file (S-Rec or Hex)
-        </button>
-        <br />
-        <span class="note">processing is done within browser w/o upload</span>
-      </fieldset>
-    </form>
-    <h3>Output hex for copy and paste</h3>
-    <form class="pure-form pure-form-stacked" id="flash_form" onsubmit="return false">
-      <textarea id="flash_data" name="flash_data" rows="10" cols="50" disabled="disabled">
-      </textarea>
-    </form>
-    <button type="button" class="pure-button pure-button-primary" id="copyBut">
-      Copy to clipboard
-    </button>
+    <br /-->
+    <hr />
+
+
+
     <div class="footer" style="display: inline-block">
       <p>
         <a href="https://pexmor.github.io/NetModule/">NetModule</a> - HW-584v2-NetModule
       </p>
     </div>
   </div>
+  <script src="assets/FileSaver.min.js" async defer></script>
+  <script src="assets/jszip.min.js" async defer></script>
   <script src="assets/source_hex.js" async defer></script>
   <script src="assets/eeprom_desc.js" async defer></script>
   <script src="assets/script.js" async defer></script>
