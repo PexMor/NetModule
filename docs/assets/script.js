@@ -268,25 +268,10 @@ const prepEepromImg = (data) => {
   for (let key in data) {
     const addr = data_default[key].eeprom_addr + dbg_offset;
     const type = data_default[key].type;
-    const padding = data_default[key].padding;
+    const padding_length = data_default[key].padding;
     const reverse = data_default[key].reverse;
     const val = data[key];
-    let val_bytes = [];
-    if (type === "ip") {
-      val_bytes = val.split(".").map((v) => parseInt(v));
-      if (reverse) val_bytes = val_bytes.reverse();
-    } else if (type === "port") {
-      val_bytes = [parseInt(val) >> 8, parseInt(val) & 0xff];
-      if (reverse) val_bytes = val_bytes.reverse();
-    } else if (type === "mac") {
-      val_bytes = val.split(":").map((v) => parseInt(v, 16));
-      if (reverse) val_bytes = val_bytes.reverse();
-    } else if (type === "str") {
-      val_bytes = Array.from(val.padEnd(padding, "\0")).map((v) =>
-        v.charCodeAt(0)
-      );
-      // no reverse for str
-    }
+    let val_bytes = encode_type(type, val, reverse, padding_length);
     val_bytes.forEach((byte, i) => {
       eeprom_img[addr + i] = byte;
     });
@@ -360,6 +345,91 @@ const makeEepromImg = (data) => {
   }
   return hexdump;
 };
+
+const encode_type = (val_type, val, reverse, padding_length) => {
+  // encode val to bytes based on val_type
+  let val_bytes = [];
+  if (val_type === "ip") {
+    val_bytes = val.split(".").map((v) => parseInt(v));
+    if (reverse) val_bytes = val_bytes.reverse();
+  } else if (val_type === "port") {
+    val_bytes = [parseInt(val) >> 8, parseInt(val) & 0xff];
+    if (reverse) val_bytes = val_bytes.reverse();
+  } else if (val_type === "mac") {
+    val_bytes = val.split(":").map((v) => parseInt(v, 16));
+    if (reverse) val_bytes = val_bytes.reverse();
+  } else if (val_type === "str") {
+    val_bytes = Array.from(val.padEnd(padding_length, "\0")).map((v) =>
+      v.charCodeAt(0)
+    );
+    // no reverse for str
+  }
+  return val_bytes;
+};
+
+const decode_type = (val_type, val_bytes, reverse, padding_length) => {
+  // decode val_bytes to val based on val_type
+  let val = "";
+  if (val_type === "ip") {
+    if (reverse) val_bytes = val_bytes.reverse();
+    val = val_bytes.join(".");
+  } else if (val_type === "port") {
+    if (reverse) val_bytes = val_bytes.reverse();
+    val = (val_bytes[0] << 8) | val_bytes[1];
+  } else if (val_type === "mac") {
+    if (reverse) val_bytes = val_bytes.reverse();
+    val = val_bytes.map((v) => v.toString(16).padStart(2, "0")).join(":");
+  } else if (val_type === "str") {
+    val = val_bytes.map((v) => String.fromCharCode(v)).join("");
+    val = val.replace(/\0/g, "");
+  }
+  return val;
+};
+
+/*
+// test decoder using encoder
+let ve, vd, vo, hex;
+// :: ip
+vo = "192.168.1.1";
+ve = encode_type("ip", vo, (reverse = false), (padding_length = 0));
+hex = ve.map((v) => v.toString(16).padStart(2, "0")).join("");
+console.log("hex", hex);
+vd = decode_type("ip", ve, (reverse = false), (padding_length = 0));
+//assert vo==vd
+console.log(vo, "?==?", vd);
+// :: port (not reversed)
+vo = 1234;
+ve = encode_type("port", vo, (reverse = false), (padding_length = 0));
+hex = ve.map((v) => v.toString(16).padStart(2, "0")).join("");
+console.log("hex", hex);
+vd = decode_type("port", ve, (reverse = false), (padding_length = 0));
+//assert vo==vd
+console.log(vo, "?==?", vd);
+// :: port (reversed)
+vo = 1234;
+ve = encode_type("port", vo, (reverse = true), (padding_length = 0));
+hex = ve.map((v) => v.toString(16).padStart(2, "0")).join("");
+console.log("hex", hex);
+vd = decode_type("port", ve, (reverse = true), (padding_length = 0));
+//assert vo==vd
+console.log(vo, "?==?", vd);
+// :: mac
+vo = "01:23:45:67:89:ab";
+ve = encode_type("mac", vo, (reverse = false), (padding_length = 0));
+hex = ve.map((v) => v.toString(16).padStart(2, "0")).join("");
+console.log("hex", hex);
+vd = decode_type("mac", ve, (reverse = false), (padding_length = 0));
+//assert vo==vd
+console.log(vo, "?==?", vd);
+// :: str
+vo = "Hello World";
+ve = encode_type("str", vo, (reverse = false), (padding_length = 16));
+hex = ve.map((v) => v.toString(16).padStart(2, "0")).join("");
+console.log("hex", hex);
+vd = decode_type("str", ve, (reverse = false), (padding_length = 16));
+//assert vo==vd
+console.log(vo, "?==?", vd);
+*/
 
 const showHexDump = (data) => {
   prepEepromImg(data);
@@ -508,6 +578,7 @@ const getDataFromForm = (inputs) => {
   });
   return data;
 };
+
 function getDTFilename() {
   let file_name_stem = document.getElementById("filestem").value;
   // add timestamp to file name
